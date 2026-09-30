@@ -1,1188 +1,171 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#64152e">
+<meta name="description" content="Cave Victorio — gestion gratuite de cave à vin">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Cave Victorio 🍷</title>
-
 <style>
-*{box-sizing:border-box}
-
-body{
-    margin:0;
-    background:#f7f3ef;
-    color:#2b2023;
-    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;
-    padding-bottom:85px;
-}
-
-header{
-    background:linear-gradient(135deg,#5b1028,#8b3450);
-    color:white;
-    padding:25px 20px 22px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-header small{
-    opacity:.7;
-    letter-spacing:2px;
-}
-
-header h1{
-    margin:5px 0 0;
-    font-size:28px;
-}
-
-.add{
-    width:45px;
-    height:45px;
-    border:0;
-    border-radius:50%;
-    background:#ffffff25;
-    color:white;
-    font-size:28px;
-}
-
-main{
-    max-width:700px;
-    margin:auto;
-    padding:16px;
-}
-
-.hero{
-    background:white;
-    border-radius:22px;
-    padding:22px;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    text-align:center;
-    box-shadow:0 5px 20px #00000010;
-}
-
-.hero strong{
-    display:block;
-    color:#64152e;
-    font-size:30px;
-}
-
-.hero span{
-    color:#76696c;
-    font-size:13px;
-}
-
-.cards{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-top:12px;
-}
-
-.card{
-    background:white;
-    border:0;
-    border-radius:17px;
-    padding:17px;
-    text-align:left;
-    box-shadow:0 4px 15px #00000009;
-}
-
-.card strong{
-    display:block;
-    font-size:25px;
-}
-
-.card span{
-    font-size:13px;
-    color:#76696c;
-}
-
-h2{
-    margin:24px 2px 12px;
-    font-size:21px;
-}
-
-.wine{
-    background:white;
-    border-radius:16px;
-    padding:14px;
-    margin-bottom:10px;
-    display:flex;
-    gap:12px;
-    align-items:center;
-    box-shadow:0 3px 14px #00000009;
-}
-
-.bottle{
-    width:48px;
-    height:58px;
-    border-radius:12px;
-    background:#eee3df;
-    display:grid;
-    place-items:center;
-    font-size:25px;
-}
-
-.info{
-    flex:1;
-}
-
-.info strong{
-    display:block;
-    font-size:16px;
-}
-
-.muted{
-    color:#776b6e;
-    font-size:13px;
-    margin-top:3px;
-}
-
-.badge{
-    display:inline-block;
-    margin-top:7px;
-    padding:5px 9px;
-    border-radius:20px;
-    background:#eee8e5;
-    font-size:11px;
-    font-weight:bold;
-}
-
-.peak{
-    background:#e3f2e7;
-    color:#28633a;
-}
-
-.ready{
-    background:#fff0dc;
-    color:#8a4d09;
-}
-
-.old{
-    background:#f7dddd;
-    color:#8d2424;
-}
-
-nav{
-    position:fixed;
-    bottom:0;
-    left:0;
-    right:0;
-    height:75px;
-    background:white;
-    border-top:1px solid #ddd5d1;
-    display:flex;
-    justify-content:space-around;
-    z-index:10;
-}
-
-nav button{
-    border:0;
-    background:none;
-    color:#776b6e;
-    font-size:22px;
-}
-
-nav button span{
-    display:block;
-    font-size:11px;
-    margin-top:3px;
-}
-
-nav button.active{
-    color:#64152e;
-    font-weight:bold;
-}
-
-.screen{
-    display:none;
-}
-
-.screen.active{
-    display:block;
-}
-
-.primary{
-    border:0;
-    border-radius:12px;
-    padding:11px 15px;
-    background:#64152e;
-    color:white;
-    font-weight:bold;
-}
-
-.search{
-    width:100%;
-    padding:14px;
-    border:0;
-    border-radius:14px;
-    background:white;
-    font-size:16px;
-    margin-bottom:10px;
-}
-
-.empty{
-    text-align:center;
-    padding:35px 15px;
-    color:#776b6e;
-}
-
-.modal{
-    position:fixed;
-    inset:0;
-    background:#0008;
-    z-index:20;
-    display:flex;
-    align-items:flex-end;
-}
-
-.modal.hidden{
-    display:none;
-}
-
-.sheet{
-    width:100%;
-    max-height:93vh;
-    overflow:auto;
-    background:#faf8f6;
-    border-radius:25px 25px 0 0;
-    padding:20px;
-}
-
-.sheetHead{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-}
-
-.sheetHead h2{
-    margin:0 0 15px;
-}
-
-.close{
-    border:0;
-    width:35px;
-    height:35px;
-    border-radius:50%;
-    font-size:23px;
-}
-
-form{
-    display:grid;
-    gap:12px;
-}
-
-label{
-    font-size:13px;
-    font-weight:bold;
-    color:#594d50;
-}
-
-input,select,textarea{
-    width:100%;
-    margin-top:5px;
-    padding:12px;
-    border:1px solid #ddd4d0;
-    border-radius:11px;
-    background:white;
-    font:inherit;
-}
-
-textarea{
-    min-height:70px;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-}
-
-.actions{
-    display:flex;
-    gap:8px;
-}
-
-.actions button{
-    flex:1;
-}
-
-.photo{
-    background:#eee5e1;
-    color:#4c1726;
-    border:0;
-    border-radius:12px;
-    padding:12px;
-    font-weight:bold;
-}
-
-.delete{
-    background:#f4dede;
-    color:#8d2424;
-    border:0;
-    border-radius:12px;
-    padding:12px;
-    font-weight:bold;
-}
-
-.stat{
-    background:white;
-    border-radius:15px;
-    padding:15px;
-    margin-bottom:10px;
-    display:flex;
-    justify-content:space-between;
-}
-
-@media(min-width:700px){
-    .modal{
-        align-items:center;
-    }
-
-    .sheet{
-        max-width:600px;
-        border-radius:25px;
-    }
-}
+:root{--wine:#64152e;--wine2:#8b3450;--bg:#f7f3ef;--card:#fff;--text:#2b2023;--muted:#76696c;--line:#e1d8d4;--green:#28633a;--greenbg:#e3f2e7;--orange:#8a4d09;--orangebg:#fff0dc;--red:#8d2424;--redbg:#f7dddd}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;padding-bottom:82px}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+header{background:linear-gradient(135deg,#5b1028,var(--wine2));color:#fff;padding:20px max(18px,calc((100% - 760px)/2)) 18px;display:flex;justify-content:space-between;align-items:center}
+header small{opacity:.75;letter-spacing:2px}header h1{margin:4px 0 0;font-size:27px}.add{width:45px;height:45px;border:0;border-radius:50%;background:#ffffff25;color:#fff;font-size:28px}
+main{max-width:760px;margin:auto;padding:16px}.screen{display:none}.screen.active{display:block}
+.hero{background:#fff;border-radius:22px;padding:22px;display:grid;grid-template-columns:1fr 1fr;text-align:center;box-shadow:0 5px 20px #00000010}.hero strong{display:block;color:var(--wine);font-size:30px}.hero span{color:var(--muted);font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:12px}.card,.stat{background:#fff;border:0;border-radius:17px;padding:16px;text-align:left;box-shadow:0 4px 15px #00000009}.card strong{display:block;font-size:25px}.card span{font-size:13px;color:var(--muted)}
+h2{margin:24px 2px 12px;font-size:21px}h3{margin:18px 0 2px;font-size:15px}
+.primary{border:0;border-radius:12px;padding:12px 15px;background:var(--wine);color:#fff;font-weight:700}.secondary{border:1px solid var(--line);border-radius:12px;padding:11px 14px;background:#fff;color:var(--wine);font-weight:700}
+.search{width:100%;padding:14px;border:0;border-radius:14px;background:#fff;font-size:16px;margin:12px 0;box-shadow:0 3px 12px #00000008}
+.wine{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;display:flex;gap:12px;align-items:center;box-shadow:0 3px 14px #00000009}.bottle{width:50px;height:62px;border-radius:12px;background:#eee3df;display:grid;place-items:center;font-size:25px;flex:none}.info{flex:1;min-width:0}.info strong{display:block;font-size:16px}.muted{color:var(--muted);font-size:13px;margin-top:3px}.badge{display:inline-block;margin-top:7px;padding:5px 9px;border-radius:20px;background:#eee8e5;font-size:11px;font-weight:700}.peak{background:var(--greenbg);color:var(--green)}.ready{background:var(--orangebg);color:var(--orange)}.old{background:var(--redbg);color:var(--red)}
+.actionsRow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.empty{text-align:center;padding:35px 15px;color:var(--muted)}nav{position:fixed;bottom:0;left:0;right:0;height:75px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;z-index:10}nav button{border:0;background:none;color:var(--muted);font-size:22px}nav button span{display:block;font-size:11px;margin-top:3px}nav button.active{color:var(--wine);font-weight:700}
+.stat{display:flex;justify-content:space-between;margin-bottom:10px}.sectionTitle{display:flex;justify-content:space-between;align-items:center;gap:10px}.tiny{font-size:12px;color:var(--muted)}
+.modal{position:fixed;inset:0;background:#0008;z-index:20;display:flex;align-items:flex-end}.modal.hidden{display:none}.sheet{width:100%;max-height:94vh;overflow:auto;background:#faf8f6;border-radius:25px 25px 0 0;padding:20px}.sheetHead{display:flex;justify-content:space-between;align-items:center}.sheetHead h2{margin:0 0 15px}.close{border:0;width:35px;height:35px;border-radius:50%;font-size:23px}form{display:grid;gap:11px}label{font-size:13px;font-weight:700;color:#594d50}input,select,textarea{width:100%;margin-top:5px;padding:12px;border:1px solid var(--line);border-radius:11px;background:#fff}textarea{min-height:70px;resize:vertical}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.actions{display:flex;gap:8px}.actions button{flex:1}.photo{background:#eee5e1;color:#4c1726;border:0;border-radius:12px;padding:12px;font-weight:700}.delete{background:var(--redbg);color:var(--red);border:0;border-radius:12px;padding:12px;font-weight:700}
+.scanner{background:#1e1719;color:#fff;border-radius:16px;padding:15px;margin:5px 0}.scannerTop{display:flex;justify-content:space-between;align-items:center}.progress{height:7px;background:#ffffff20;border-radius:9px;overflow:hidden;margin-top:10px}.progress>div{height:100%;width:0;background:#fff;transition:.2s}.preview{width:100%;max-height:220px;object-fit:contain;border-radius:12px;margin-top:10px;background:#111;display:none}.notice{background:#fff8e9;border:1px solid #f0dfb7;padding:11px;border-radius:12px;font-size:13px}
+@media(min-width:700px){.modal{align-items:center}.sheet{max-width:620px;border-radius:25px}.wine:hover{transform:translateY(-1px)}}
 </style>
 </head>
-
 <body>
-
-<header>
-    <div>
-        <small>MA CAVE</small>
-        <h1>Cave Victorio 🍷</h1>
-    </div>
-    <button class="add" onclick="nouvelleBouteille()">＋</button>
-</header>
-
+<header><div><small>MA CAVE</small><h1>Cave Victorio 🍷</h1></div><button class="add" onclick="nouvelleBouteille()" aria-label="Ajouter">＋</button></header>
 <main>
-
-<!-- ACCUEIL -->
-
 <section id="accueil" class="screen active">
-
-    <div class="hero">
-        <div>
-            <strong id="nbBouteilles">0</strong>
-            <span>bouteilles</span>
-        </div>
-
-        <div>
-            <strong id="valeur">0 €</strong>
-            <span>valeur de la cave</span>
-        </div>
-    </div>
-
-    <div class="cards">
-
-        <button class="card" onclick="filtrer('apogee')">
-            <strong id="nbApogee">0</strong>
-            <span>✨ À l'apogée</span>
-        </button>
-
-        <button class="card" onclick="filtrer('boire')">
-            <strong id="nbBoire">0</strong>
-            <span>🔔 À boire bientôt</span>
-        </button>
-
-    </div>
-
-    <h2>✨ À boire maintenant</h2>
-
-    <div id="listeAccueil"></div>
-
-    <div id="vide" class="empty">
-        Ta cave est vide.<br><br>
-        Appuie sur <b>＋</b> pour ajouter ta première bouteille.
-    </div>
-
+<div class="hero"><div><strong id="nbBouteilles">0</strong><span>bouteilles</span></div><div><strong id="valeur">0 €</strong><span>valeur de la cave</span></div></div>
+<div class="cards">
+<button class="card" onclick="filtrer('apogee')"><strong id="nbApogee">0</strong><span>✨ À l'apogée</span></button>
+<button class="card" onclick="filtrer('boire')"><strong id="nbBoire">0</strong><span>🔔 À surveiller / boire</span></button>
+</div>
+<div class="sectionTitle"><h2>✨ Mes vins à leur meilleur moment</h2><button class="secondary" onclick="nouvelleBouteille()">＋</button></div>
+<div id="listeAccueil"></div><div id="vide" class="empty">Ta cave est vide.<br><br>Appuie sur <b>＋</b> pour ajouter ta première bouteille.</div>
 </section>
-
-
-<!-- CAVE -->
 
 <section id="cave" class="screen">
-
-    <h2>🍷 Ma cave</h2>
-
-    <button class="primary" onclick="nouvelleBouteille()">
-        ＋ Ajouter une bouteille
-    </button>
-
-    <br><br>
-
-    <input
-        id="recherche"
-        class="search"
-        placeholder="🔎 Rechercher un vin, domaine..."
-        oninput="afficher()"
-    >
-
-    <div id="listeCave"></div>
-
+<div class="sectionTitle"><h2>🍷 Ma cave</h2><button class="primary" onclick="nouvelleBouteille()">＋ Ajouter</button></div>
+<input id="recherche" class="search" placeholder="🔎 Vin, domaine, appellation, emplacement..." oninput="afficher()">
+<div class="actionsRow"><button class="secondary" onclick="filtrer('tous')">Toutes</button><button class="secondary" onclick="filtrer('apogee')">✨ Apogée</button><button class="secondary" onclick="filtrer('boire')">🔔 À boire</button><button class="secondary" onclick="filtrer('garde')">⏳ En garde</button></div>
+<div id="listeCave"></div>
 </section>
-
-
-<!-- STATISTIQUES -->
 
 <section id="stats" class="screen">
-
-    <h2>📊 Statistiques</h2>
-
-    <div id="statistiques"></div>
-
+<h2>📊 Ma cave en chiffres</h2><div id="statistiques"></div>
+<h2>⚙️ Mes données</h2>
+<div class="actionsRow"><button class="secondary" onclick="exporter()">⬇️ Sauvegarder ma cave</button><button class="secondary" onclick="document.getElementById('importFile').click()">⬆️ Restaurer une sauvegarde</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
+<div class="notice">Les bouteilles sont enregistrées dans ton navigateur. La sauvegarde JSON te permet de récupérer ta cave sur un autre appareil. Le scan d'étiquette fonctionne directement dans le navigateur ; aucune photo n'est envoyée à un serveur par l'application.</div>
 </section>
-
 </main>
 
+<nav><button class="active" onclick="page('accueil',this)">🏠<span>Accueil</span></button><button onclick="page('cave',this)">🍷<span>Ma cave</span></button><button onclick="page('stats',this)">📊<span>Stats</span></button></nav>
 
-<!-- NAVIGATION -->
-
-<nav>
-
-    <button class="active" onclick="page('accueil',this)">
-        🏠
-        <span>Accueil</span>
-    </button>
-
-    <button onclick="page('cave',this)">
-        🍷
-        <span>Ma cave</span>
-    </button>
-
-    <button onclick="page('stats',this)">
-        📊
-        <span>Stats</span>
-    </button>
-
-</nav>
-
-
-<!-- FENÊTRE AJOUT / MODIFICATION -->
-
-<div id="modal" class="modal hidden">
-
-<div class="sheet">
-
-<div class="sheetHead">
-
-<h2 id="titreModal">Nouvelle bouteille</h2>
-
-<button class="close" onclick="fermer()">×</button>
-
+<div id="modal" class="modal hidden"><div class="sheet">
+<div class="sheetHead"><h2 id="titreModal">Nouvelle bouteille</h2><button class="close" onclick="fermer()">×</button></div>
+<div class="scanner">
+<div class="scannerTop"><b>📸 Scanner l'étiquette</b><button class="photo" onclick="prendrePhoto()">Prendre une photo</button></div>
+<div id="scanStatus" class="tiny" style="color:#ddd;margin-top:7px">Le texte est reconnu localement puis utilisé pour préremplir la fiche.</div>
+<div class="progress"><div id="scanProgress"></div></div><img id="preview" class="preview" alt="Aperçu de l'étiquette">
+<input id="photo" type="file" accept="image/*" capture="environment" hidden>
 </div>
-
-
 <form id="formulaire">
-
-<label>
-Nom du vin
-<input name="nom" required placeholder="Ex : Rioja Reserva">
-</label>
-
-
-<label>
-Domaine / Château
-<input name="domaine" placeholder="Ex : Château Margaux">
-</label>
-
-
-<div class="grid">
-
-<label>
-Appellation
-<input name="appellation">
-</label>
-
-<label>
-Millésime
-<input name="millesime" type="number">
-</label>
-
-</div>
-
-
-<div class="grid">
-
-<label>
-Couleur
-
-<select name="couleur">
-
-<option>Rouge</option>
-<option>Blanc</option>
-<option>Rosé</option>
-<option>Champagne</option>
-
-</select>
-
-</label>
-
-
-<label>
-Quantité
-<input name="quantite" type="number" min="1" value="1">
-</label>
-
-</div>
-
-
-<label>
-Emplacement
-<input name="emplacement" placeholder="Ex : Étagère 1 - Casier 3">
-</label>
-
-
-<div class="grid">
-
-<label>
-Prix (€)
-<input name="prix" type="number" step="0.01">
-</label>
-
-<label>
-Note /5
-<input name="note" type="number" min="0" max="5" step="0.5">
-</label>
-
-</div>
-
-
+<label>Nom du vin<input name="nom" required placeholder="Ex : Rioja Reserva"></label>
+<label>Domaine / Château<input name="domaine" placeholder="Ex : Château Margaux"></label>
+<div class="grid"><label>Appellation<input name="appellation"></label><label>Millésime<input name="millesime" type="number" min="1900" max="2100"></label></div>
+<div class="grid"><label>Couleur<select name="couleur"><option>Rouge</option><option>Blanc</option><option>Rosé</option><option>Champagne</option></select></label><label>Quantité<input name="quantite" type="number" min="1" value="1"></label></div>
+<label>Emplacement<input name="emplacement" placeholder="Ex : Étagère 1 - Casier 3"></label>
+<div class="grid"><label>Prix (€)<input name="prix" type="number" step="0.01" min="0"></label><label>Note /5<input name="note" type="number" min="0" max="5" step=".5"></label></div>
 <h3>⏳ Garde du vin</h3>
-
-
-<div class="grid">
-
-<label>
-À boire dès
-<input name="debut" type="number" placeholder="2027">
-</label>
-
-<label>
-Début apogée
-<input name="apogeeDebut" type="number" placeholder="2029">
-</label>
-
-<label>
-Fin apogée
-<input name="apogeeFin" type="number" placeholder="2032">
-</label>
-
-<label>
-À boire avant
-<input name="fin" type="number" placeholder="2035">
-</label>
-
-</div>
-
-
-<label>
-🍽️ Accords mets-vins
-<textarea name="accords"
-placeholder="Côte de bœuf, fromages..."></textarea>
-</label>
-
-
-<label>
-📝 Mes notes
-<textarea name="notes"></textarea>
-</label>
-
-
-<div class="actions">
-
-<button type="button" class="photo" onclick="prendrePhoto()">
-📸 Scanner l'étiquette
-</button>
-
-<button type="submit" class="primary">
-Enregistrer
-</button>
-
-</div>
-
-
-<button
-type="button"
-id="boutonSupprimer"
-class="delete"
-style="display:none"
-onclick="supprimer()">
-🗑 Supprimer cette bouteille
-</button>
-
-<input
-id="photo"
-type="file"
-accept="image/*"
-capture="environment"
-style="display:none">
-
+<div class="grid"><label>À boire dès<input name="debut" type="number" min="1900" max="2100" placeholder="2027"></label><label>Début apogée<input name="apogeeDebut" type="number" min="1900" max="2100" placeholder="2029"></label><label>Fin apogée<input name="apogeeFin" type="number" min="1900" max="2100" placeholder="2032"></label><label>À boire avant<input name="fin" type="number" min="1900" max="2100" placeholder="2035"></label></div>
+<label>🍽️ Accords mets-vins<textarea name="accords" placeholder="Côte de bœuf, fromages..."></textarea></label>
+<label>📝 Mes notes<textarea name="notes"></textarea></label>
+<div class="actions"><button type="button" class="secondary" onclick="fermer()">Annuler</button><button type="submit" class="primary">Enregistrer</button></div>
+<button type="button" id="boutonSupprimer" class="delete" style="display:none" onclick="supprimer()">🗑 Supprimer cette bouteille</button>
 </form>
+</div></div>
 
-</div>
-
-</div>
-
-
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
+const KEY="caveVictorio";
+let bouteilles=JSON.parse(localStorage.getItem(KEY)||"[]"), modification=null, filtreActif="tous";
 
-let bouteilles =
-JSON.parse(localStorage.getItem("caveVictorio") || "[]");
-
-let modification = null;
-
-
-/* -----------------------------
-   SAUVEGARDE
------------------------------ */
-
-function sauvegarder(){
-
-localStorage.setItem(
-"caveVictorio",
-JSON.stringify(bouteilles)
-);
-
-afficher();
-
-}
-
-
-/* -----------------------------
-   STATUT DU VIN
------------------------------ */
-
+function sauvegarder(){localStorage.setItem(KEY,JSON.stringify(bouteilles));afficher()}
+function annee(){return new Date().getFullYear()}
 function statut(v){
-
-const annee = new Date().getFullYear();
-
-if(v.fin && annee > Number(v.fin))
-return ["Apogée dépassée","old"];
-
-if(
-v.apogeeDebut &&
-v.apogeeFin &&
-annee >= Number(v.apogeeDebut) &&
-annee <= Number(v.apogeeFin)
-)
-return ["✨ À l'apogée","peak"];
-
-if(
-v.fin &&
-annee >= Number(v.fin)-1
-)
-return ["🔔 À boire bientôt","ready"];
-
-if(v.debut && annee < Number(v.debut))
-return ["En garde",""];
-
-return ["Prêt à boire","ready"];
-
+ const y=annee(), debut=Number(v.debut), ad=Number(v.apogeeDebut), af=Number(v.apogeeFin), fin=Number(v.fin);
+ if(fin&&y>fin)return["Apogée dépassée","old"];
+ if(ad&&af&&y>=ad&&y<=af)return["✨ À l'apogée","peak"];
+ if(fin&&y>=fin-1)return["🔔 À boire bientôt","ready"];
+ if(debut&&y<debut)return["⏳ En garde",""];
+ return["🍷 Prêt à boire","ready"];
 }
-
-
-/* -----------------------------
-   AFFICHAGE
------------------------------ */
-
-function afficher(){
-
-const recherche =
-(document.getElementById("recherche")?.value || "")
-.toLowerCase();
-
-
-const total =
-bouteilles.reduce(
-(s,v)=>s + Number(v.quantite || 1),
-0
-);
-
-
-const valeur =
-bouteilles.reduce(
-(s,v)=>s +
-(Number(v.prix)||0) *
-(Number(v.quantite)||1),
-0
-);
-
-
-const apogee =
-bouteilles.filter(v=>statut(v)[1]==="peak")
-.reduce((s,v)=>s+Number(v.quantite||1),0);
-
-
-const boire =
-bouteilles.filter(v=>
-["ready","old"].includes(statut(v)[1])
-)
-.reduce((s,v)=>s+Number(v.quantite||1),0);
-
-
-document.getElementById("nbBouteilles").textContent=total;
-
-document.getElementById("valeur").textContent=
-new Intl.NumberFormat("fr-FR",{
-style:"currency",
-currency:"EUR"
-}).format(valeur);
-
-document.getElementById("nbApogee").textContent=apogee;
-
-document.getElementById("nbBoire").textContent=boire;
-
-
-const liste =
-bouteilles.filter(v=>{
-
-const texte =
-[
-v.nom,
-v.domaine,
-v.appellation,
-v.millesime,
-v.emplacement
-]
-.join(" ")
-.toLowerCase();
-
-return texte.includes(recherche);
-
-});
-
-
-document.getElementById("listeCave").innerHTML =
-liste.map(carte).join("") ||
-`<div class="empty">Aucune bouteille trouvée.</div>`;
-
-
-const maintenant =
-bouteilles.filter(v=>statut(v)[1]==="peak");
-
-
-document.getElementById("listeAccueil").innerHTML =
-maintenant.slice(0,5).map(carte).join("");
-
-
-document.getElementById("vide").style.display =
-bouteilles.length ? "none" : "block";
-
-
-afficherStats();
-
+function quant(v){return Math.max(1,Number(v.quantite)||1)}
+function esc(t){return String(t??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function filtrer(type){filtreActif=type;page("cave",document.querySelectorAll("nav button")[1]);afficher()}
+function correspond(v){
+ const q=(document.getElementById("recherche")?.value||"").toLowerCase().trim();
+ const text=[v.nom,v.domaine,v.appellation,v.millesime,v.emplacement,v.accords].join(" ").toLowerCase();
+ if(q&&!text.includes(q))return false;
+ const s=statut(v)[1];
+ if(filtreActif==="apogee"&&s!=="peak")return false;
+ if(filtreActif==="boire"&&!["ready","old"].includes(s))return false;
+ if(filtreActif==="garde"&&s!=="")return false;
+ return true;
 }
-
-
-/* -----------------------------
-   CARTE BOUTEILLE
------------------------------ */
-
 function carte(v){
-
-const s=statut(v);
-
-return `
-
-<div class="wine" onclick="modifier('${v.id}')">
-
-<div class="bottle">🍷</div>
-
-<div class="info">
-
-<strong>${securise(v.nom)}</strong>
-
-<div class="muted">
-${securise(
-[
-v.domaine,
-v.appellation,
-v.millesime
-]
-.filter(Boolean)
-.join(" • ")
-)}
-</div>
-
-<span class="badge ${s[1]}">
-${s[0]}
-</span>
-
-${v.emplacement ?
-`<div class="muted">
-📍 ${securise(v.emplacement)}
-</div>` : ""}
-
-</div>
-
-<strong>${v.quantite || 1}×</strong>
-
-</div>
-
-`;
-
+ const s=statut(v);
+ return '<div class="wine" onclick="modifier(\''+esc(v.id)+'\')"><div class="bottle">'+(v.couleur==="Champagne"?"🍾":v.couleur==="Blanc"?"🥂":v.couleur==="Rosé"?"🌸":"🍷")+'</div><div class="info"><strong>'+esc(v.nom||"Vin sans nom")+'</strong><div class="muted">'+esc([v.domaine,v.appellation,v.millesime].filter(Boolean).join(" • "))+'</div><span class="badge '+s[1]+'">'+s[0]+'</span>'+(v.emplacement?'<div class="muted">📍 '+esc(v.emplacement)+'</div>':"")+(v.note?'<div class="muted">⭐ '+esc(v.note)+'/5</div>':"")+'</div><strong>'+quant(v)+'×</strong></div>';
 }
-
-
-/* -----------------------------
-   AJOUT
------------------------------ */
-
-function nouvelleBouteille(){
-
-modification=null;
-
-document.getElementById("formulaire").reset();
-
-document.querySelector("[name=quantite]").value=1;
-
-document.getElementById("titreModal")
-.textContent="Nouvelle bouteille";
-
-document.getElementById("boutonSupprimer")
-.style.display="none";
-
-document.getElementById("modal")
-.classList.remove("hidden");
-
+function afficher(){
+ const total=bouteilles.reduce((s,v)=>s+quant(v),0), valeur=bouteilles.reduce((s,v)=>s+(Number(v.prix)||0)*quant(v),0);
+ const peak=bouteilles.filter(v=>statut(v)[1]==="peak").reduce((s,v)=>s+quant(v),0), boire=bouteilles.filter(v=>["ready","old"].includes(statut(v)[1])).reduce((s,v)=>s+quant(v),0);
+ document.getElementById("nbBouteilles").textContent=total;document.getElementById("valeur").textContent=new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(valeur);
+ document.getElementById("nbApogee").textContent=peak;document.getElementById("nbBoire").textContent=boire;
+ const liste=bouteilles.filter(correspond);document.getElementById("listeCave").innerHTML=liste.map(carte).join("")||'<div class="empty">Aucune bouteille trouvée.</div>';
+ document.getElementById("listeAccueil").innerHTML=bouteilles.filter(v=>statut(v)[1]==="peak").slice(0,6).map(carte).join("")||'<div class="empty">Aucun vin n’est actuellement dans sa période d’apogée.</div>';
+ document.getElementById("vide").style.display=bouteilles.length?"none":"block";afficherStats();
 }
-
-
-/* -----------------------------
-   MODIFICATION
------------------------------ */
-
-function modifier(id){
-
-const v =
-bouteilles.find(x=>x.id===id);
-
-if(!v)return;
-
-modification=id;
-
-const form=document.getElementById("formulaire");
-
-Object.keys(v).forEach(k=>{
-
-const champ=form.elements[k];
-
-if(champ)
-champ.value=v[k] ?? "";
-
-});
-
-
-document.getElementById("titreModal")
-.textContent="Modifier la bouteille";
-
-document.getElementById("boutonSupprimer")
-.style.display="block";
-
-document.getElementById("modal")
-.classList.remove("hidden");
-
-}
-
-
-/* -----------------------------
-   ENREGISTREMENT
------------------------------ */
-
-document.getElementById("formulaire")
-.addEventListener("submit",function(e){
-
-e.preventDefault();
-
-const donnees =
-Object.fromEntries(
-new FormData(this).entries()
-);
-
-
-if(modification){
-
-bouteilles =
-bouteilles.map(v=>
-v.id===modification
-? {...v,...donnees}
-: v
-);
-
-}else{
-
-bouteilles.push({
-
-id:
-Date.now().toString(),
-
-...donnees
-
-});
-
-}
-
-
-sauvegarder();
-
-fermer();
-
-});
-
-
-/* -----------------------------
-   SUPPRESSION
------------------------------ */
-
-function supprimer(){
-
-if(!modification)return;
-
-if(confirm("Supprimer cette bouteille ?")){
-
-bouteilles =
-bouteilles.filter(
-v=>v.id!==modification
-);
-
-sauvegarder();
-
-fermer();
-
-}
-
-}
-
-
-/* -----------------------------
-   FENÊTRE
------------------------------ */
-
-function fermer(){
-
-document.getElementById("modal")
-.classList.add("hidden");
-
-}
-
-
-/* -----------------------------
-   NAVIGATION
------------------------------ */
-
-function page(id, bouton){
-
-document
-.querySelectorAll(".screen")
-.forEach(x=>x.classList.remove("active"));
-
-document
-.getElementById(id)
-.classList.add("active");
-
-
-document
-.querySelectorAll("nav button")
-.forEach(x=>x.classList.remove("active"));
-
-bouton.classList.add("active");
-
-}
-
-
-/* -----------------------------
-   FILTRE RAPIDE
------------------------------ */
-
-function filtrer(type){
-
-page(
-"cave",
-document.querySelectorAll("nav button")[1]
-);
-
-const liste =
-type==="apogee"
-?
-bouteilles.filter(v=>statut(v)[1]==="peak")
-:
-bouteilles.filter(v=>
-["ready","old"].includes(statut(v)[1])
-);
-
-document.getElementById("listeCave")
-.innerHTML =
-liste.map(carte).join("") ||
-`<div class="empty">
-Aucune bouteille dans cette catégorie.
-</div>`;
-
-}
-
-
-/* -----------------------------
-   STATISTIQUES
------------------------------ */
-
 function afficherStats(){
-
-const total =
-bouteilles.reduce(
-(s,v)=>s+Number(v.quantite||1),0
-);
-
-
-const rouges =
-bouteilles
-.filter(v=>v.couleur==="Rouge")
-.reduce((s,v)=>s+Number(v.quantite||1),0);
-
-
-const blancs =
-bouteilles
-.filter(v=>v.couleur==="Blanc")
-.reduce((s,v)=>s+Number(v.quantite||1),0);
-
-
-const roses =
-bouteilles
-.filter(v=>v.couleur==="Rosé")
-.reduce((s,v)=>s+Number(v.quantite||1),0);
-
-
-const champagne =
-bouteilles
-.filter(v=>v.couleur==="Champagne")
-.reduce((s,v)=>s+Number(v.quantite||1),0);
-
-
-document.getElementById("statistiques")
-.innerHTML=`
-
-<div class="stat">
-<span>Total</span>
-<strong>${total}</strong>
-</div>
-
-<div class="stat">
-<span>🍷 Rouges</span>
-<strong>${rouges}</strong>
-</div>
-
-<div class="stat">
-<span>🥂 Blancs</span>
-<strong>${blancs}</strong>
-</div>
-
-<div class="stat">
-<span>🌸 Rosés</span>
-<strong>${roses}</strong>
-</div>
-
-<div class="stat">
-<span>🍾 Champagne</span>
-<strong>${champagne}</strong>
-</div>
-
-`;
-
+ const total=bouteilles.reduce((s,v)=>s+quant(v),0), val=bouteilles.reduce((s,v)=>s+(Number(v.prix)||0)*quant(v),0);
+ const types=["Rouge","Blanc","Rosé","Champagne"];const lignes=types.map(c=>'<div class="stat"><span>'+(c==="Rouge"?"🍷":c==="Blanc"?"🥂":c==="Rosé"?"🌸":"🍾")+' '+c+'</span><strong>'+bouteilles.filter(v=>v.couleur===c).reduce((s,v)=>s+quant(v),0)+'</strong></div>').join("");
+ const statuses=[["✨ À l'apogée","peak"],["🔔 À boire / surveiller","ready"],["⚠️ Apogée dépassée","old"],["⏳ En garde",""]].map(x=>'<div class="stat"><span>'+x[0]+'</span><strong>'+bouteilles.filter(v=>statut(v)[1]===x[1]).reduce((s,v)=>s+quant(v),0)+'</strong></div>').join("");
+ document.getElementById("statistiques").innerHTML='<div class="stat"><span>Total</span><strong>'+total+' bouteilles</strong></div><div class="stat"><span>Valeur estimée</span><strong>'+new Intl.NumberFormat("fr-FR",{style:"currency",currency:"EUR"}).format(val)+'</strong></div>'+lignes+statuses;
 }
-
-
-/* -----------------------------
-   PHOTO ÉTIQUETTE
------------------------------ */
-
-function prendrePhoto(){
-
-document.getElementById("photo").click();
-
+function nouvelleBouteille(){modification=null;document.getElementById("formulaire").reset();document.querySelector("[name=quantite]").value=1;document.getElementById("titreModal").textContent="Nouvelle bouteille";document.getElementById("boutonSupprimer").style.display="none";resetScanner();document.getElementById("modal").classList.remove("hidden")}
+function modifier(id){const v=bouteilles.find(x=>x.id===id);if(!v)return;modification=id;const f=document.getElementById("formulaire");Object.keys(v).forEach(k=>{if(f.elements[k])f.elements[k].value=v[k]??""});document.getElementById("titreModal").textContent="Modifier la bouteille";document.getElementById("boutonSupprimer").style.display="block";resetScanner();document.getElementById("modal").classList.remove("hidden")}
+document.getElementById("formulaire").addEventListener("submit",e=>{e.preventDefault();const d=Object.fromEntries(new FormData(e.target).entries());d.quantite=Math.max(1,Number(d.quantite)||1);if(modification)bouteilles=bouteilles.map(v=>v.id===modification?{...v,...d}:v);else bouteilles.push({id:crypto.randomUUID?crypto.randomUUID():Date.now().toString(),createdAt:new Date().toISOString(),...d});sauvegarder();fermer()});
+function supprimer(){if(!modification)return;if(confirm("Supprimer cette bouteille ?")){bouteilles=bouteilles.filter(v=>v.id!==modification);sauvegarder();fermer()}}
+function fermer(){document.getElementById("modal").classList.add("hidden")}
+function page(id,b){document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll("nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active")}
+function resetScanner(){document.getElementById("preview").style.display="none";document.getElementById("preview").src="";document.getElementById("scanStatus").textContent="Le texte est reconnu localement puis utilisé pour préremplir la fiche.";document.getElementById("scanProgress").style.width="0%"}
+function prendrePhoto(){document.getElementById("photo").click()}
+document.getElementById("photo").addEventListener("change",async function(){if(!this.files.length)return;const file=this.files[0],img=document.getElementById("preview");img.src=URL.createObjectURL(file);img.style.display="block";await reconnaitre(file)});
+async function reconnaitre(file){
+ const status=document.getElementById("scanStatus"),bar=document.getElementById("scanProgress");
+ status.textContent="🔎 Analyse de l’étiquette…";bar.style.width="5%";
+ try{
+  if(!window.Tesseract)throw new Error("OCR indisponible");
+  const result=await Tesseract.recognize(file,"fra+eng",{logger:m=>{if(m.status==="recognizing text"){bar.style.width=Math.round((m.progress||0)*100)+"%"}}});
+  const text=(result.data.text||"").replace(/\s+/g," ").trim();bar.style.width="100%";
+  if(!text){status.textContent="Aucun texte lisible. Essaie une photo plus nette et bien éclairée.";return}
+  remplirDepuisOCR(text);status.textContent="✅ Étiquette analysée. Vérifie les champs avant d’enregistrer.";
+ }catch(e){console.error(e);status.textContent="⚠️ La reconnaissance n’a pas pu aboutir. Tu peux remplir la fiche manuellement."}
 }
-
-
-/*
-    La reconnaissance OCR de l'étiquette
-    sera ajoutée dans la prochaine version.
-
-    Pour l'instant, l'iPhone peut déjà
-    ouvrir directement son appareil photo.
-*/
-
-document.getElementById("photo")
-.addEventListener("change",function(){
-
-if(this.files.length){
-
-alert(
-"📸 Photo prise !\n\n" +
-"Dans la prochaine version de Cave Victorio, " +
-"l'étiquette sera analysée automatiquement " +
-"pour remplir la fiche du vin."
-);
-
+function remplirDepuisOCR(text){
+ const f=document.getElementById("formulaire"), raw=text;
+ const year=(raw.match(/\b(19\d{2}|20\d{2}|21\d{2})\b/)||[])[1];
+ if(year&&!f.elements.millesime.value)f.elements.millesime.value=year;
+ const lower=raw.toLowerCase();
+ if(/champagne|brut|crémant|cremant/.test(lower)&&!f.elements.couleur.value)f.elements.couleur.value="Champagne";
+ else if(/rosé|rose/.test(lower))f.elements.couleur.value="Rosé";
+ else if(/blanc|white/.test(lower))f.elements.couleur.value="Blanc";
+ else if(/rouge|red|cabernet|merlot|syrah|tempranillo|pinot noir/.test(lower))f.elements.couleur.value="Rouge";
+ const lines=raw.split(/(?=[A-ZÀ-ÖØ-Ý])/).map(x=>x.trim()).filter(x=>x.length>2);
+ const clean=lines.sort((a,b)=>b.length-a.length)[0]?.slice(0,90)||"";
+ if(clean&&!f.elements.nom.value)f.elements.nom.value=clean.replace(/\b(19\d{2}|20\d{2}|21\d{2})\b/g,"").trim();
+ if(!f.elements.notes.value)f.elements.notes.value="Texte reconnu sur l’étiquette : "+raw.slice(0,700);
 }
-
-});
-
-
-/* -----------------------------
-   SÉCURITÉ AFFICHAGE
------------------------------ */
-
-function securise(texte){
-
-return String(texte || "")
-.replaceAll("&","&amp;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;")
-.replaceAll('"',"&quot;")
-.replaceAll("'","&#039;");
-
-}
-
-
-/* -----------------------------
-   PREMIÈRE UTILISATION
------------------------------ */
-
-if(bouteilles.length===0){
-
-bouteilles=[
-
-{
-id:"demo",
-nom:"Rioja Reserva",
-domaine:"Bodega Exemple",
-appellation:"Rioja",
-millesime:"2020",
-couleur:"Rouge",
-quantite:1,
-emplacement:"Étagère 1",
-prix:"15",
-note:"4",
-debut:"2025",
-apogeeDebut:"2027",
-apogeeFin:"2030",
-fin:"2033",
-accords:"Côte de bœuf, fromages affinés",
-notes:"Bouteille de démonstration."
-}
-
-];
-
-sauvegarder();
-
-}
-
-
-afficher();
-
+function exporter(){const blob=new Blob([JSON.stringify({app:"Cave Victorio",version:2,exportedAt:new Date().toISOString(),bouteilles},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cave-victorio-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+document.getElementById("importFile").addEventListener("change",async function(){const file=this.files[0];if(!file)return;try{const data=JSON.parse(await file.text()),arr=Array.isArray(data)?data:data.bouteilles;if(!Array.isArray(arr))throw new Error("Format invalide");if(confirm("Remplacer la cave actuelle par cette sauvegarde ?")){bouteilles=arr;sauvegarder();alert("✅ Cave restaurée.");}}catch(e){alert("❌ Fichier de sauvegarde invalide.")}this.value=""});
+if(!bouteilles.length){bouteilles=[{id:"demo",nom:"Rioja Reserva",domaine:"Bodega Exemple",appellation:"Rioja",millesime:"2020",couleur:"Rouge",quantite:1,emplacement:"Étagère 1",prix:"15",note:"4",debut:"2025",apogeeDebut:"2027",apogeeFin:"2030",fin:"2033",accords:"Côte de bœuf, fromages affinés",notes:"Bouteille de démonstration."}];sauvegarder()}afficher();
+if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
-
 </body>
 </html>
