@@ -1,0 +1,11 @@
+{
+  "name": "Cave Victorio",
+  "short_name": "Cave Victorio",
+  "description": "Gestion gratuite de cave à vin",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f7f3ef",
+  "theme_color": "#64152e",
+  "lang": "fr",
+  "icons": []
+}
