@@ -139,30 +139,86 @@ function prendrePhoto(){document.getElementById("photo").click()}
 document.getElementById("photo").addEventListener("change",async function(){if(!this.files.length)return;const file=this.files[0],img=document.getElementById("preview");img.src=URL.createObjectURL(file);img.style.display="block";await reconnaitre(file)});
 async function reconnaitre(file){
  const status=document.getElementById("scanStatus"),bar=document.getElementById("scanProgress");
- status.textContent="🔎 Analyse de l’étiquette…";bar.style.width="5%";
+ status.textContent="🔎 Préparation de la photo…";bar.style.width="5%";
  try{
   if(!window.Tesseract)throw new Error("OCR indisponible");
-  const result=await Tesseract.recognize(file,"fra+eng",{logger:m=>{if(m.status==="recognizing text"){bar.style.width=Math.round((m.progress||0)*100)+"%"}}});
-  const text=(result.data.text||"").replace(/\s+/g," ").trim();bar.style.width="100%";
-  if(!text){status.textContent="Aucun texte lisible. Essaie une photo plus nette et bien éclairée.";return}
-  remplirDepuisOCR(text);status.textContent="✅ Étiquette analysée. Vérifie les champs avant d’enregistrer.";
+  const images=await preparerImagesOCR(file);
+  let textes=[];
+  for(let i=0;i<images.length;i++){
+   status.textContent=i===0?"🔎 Lecture de l’étiquette…":"🔎 Amélioration de la lecture…";
+   const result=await Tesseract.recognize(images[i],"fra+eng",{
+    logger:m=>{if(m.status==="recognizing text"){bar.style.width=Math.min(95,10+Math.round((m.progress||0)*70))+"%"}}
+   });
+   if(result.data.text)textes.push(result.data.text);
+  }
+  const text=nettoyerOCR(textes.join("\n"));bar.style.width="100%";
+  if(!text){status.textContent="Aucun texte lisible. Essaie une photo plus nette, sans reflet, avec l’étiquette bien face à l’appareil.";return}
+  remplirDepuisOCR(text);
+  status.textContent="✅ Lecture terminée. Vérifie les champs avant d’enregistrer.";
  }catch(e){console.error(e);status.textContent="⚠️ La reconnaissance n’a pas pu aboutir. Tu peux remplir la fiche manuellement."}
 }
+async function preparerImagesOCR(file){
+ const src=URL.createObjectURL(file);
+ try{
+  const img=await new Promise((resolve,reject)=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=reject;i.src=src});
+  const max=1800,scale=Math.min(2,max/Math.max(img.naturalWidth,img.naturalHeight));
+  const w=Math.round(img.naturalWidth*scale),h=Math.round(img.naturalHeight*scale);
+  const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.drawImage(img,0,0,w,h);
+  const data=ctx.getImageData(0,0,w,h),p=data.data;
+  for(let i=0;i<p.length;i+=4){
+   const y=0.299*p[i]+0.587*p[i+1]+0.114*p[i+2];
+   const contrast=Math.max(0,Math.min(255,(y-128)*1.45+128));
+   p[i]=p[i+1]=p[i+2]=contrast;
+  }
+  ctx.putImageData(data,0,0);
+  return [file,canvas.toDataURL("image/jpeg",.92)];
+ }finally{URL.revokeObjectURL(src)}
+}
+function nettoyerOCR(text){
+ return text.replace(/[|¦]/g,"I").replace(/\r/g,"\n")
+  .split("\n").map(s=>s.replace(/\s+/g," ").trim()).filter(Boolean)
+  .filter((s,i,a)=>a.findIndex(x=>x.toLowerCase()===s.toLowerCase())===i).join("\n");
+}
 function remplirDepuisOCR(text){
- const f=document.getElementById("formulaire"), raw=text;
+ const f=document.getElementById("formulaire");
+ const lignes=text.split("\n").map(s=>s.trim()).filter(s=>s.length>=2);
+ const raw=lignes.join(" ");
  const year=(raw.match(/\b(19\d{2}|20\d{2}|21\d{2})\b/)||[])[1];
  if(year&&!f.elements.millesime.value)f.elements.millesime.value=year;
  const lower=raw.toLowerCase();
- if(/champagne|brut|crémant|cremant/.test(lower)&&!f.elements.couleur.value)f.elements.couleur.value="Champagne";
+ const setIfEmpty=(name,value)=>{if(value&&!f.elements[name].value)f.elements[name].value=value};
+ if(/champagne|brut|crémant|cremant/.test(lower))f.elements.couleur.value="Champagne";
  else if(/rosé|rose/.test(lower))f.elements.couleur.value="Rosé";
- else if(/blanc|white/.test(lower))f.elements.couleur.value="Blanc";
- else if(/rouge|red|cabernet|merlot|syrah|tempranillo|pinot noir/.test(lower))f.elements.couleur.value="Rouge";
- const lines=raw.split(/(?=[A-ZÀ-ÖØ-Ý])/).map(x=>x.trim()).filter(x=>x.length>2);
- const clean=lines.sort((a,b)=>b.length-a.length)[0]?.slice(0,90)||"";
- if(clean&&!f.elements.nom.value)f.elements.nom.value=clean.replace(/\b(19\d{2}|20\d{2}|21\d{2})\b/g,"").trim();
- if(!f.elements.notes.value)f.elements.notes.value="Texte reconnu sur l’étiquette : "+raw.slice(0,700);
-}
-function exporter(){const blob=new Blob([JSON.stringify({app:"Cave Victorio",version:2,exportedAt:new Date().toISOString(),bouteilles},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cave-victorio-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+ else if(/blanc|white|chardonnay|sauvignon blanc/.test(lower))f.elements.couleur.value="Blanc";
+ else if(/rouge|red|cabernet|merlot|syrah|tempranillo|pinot noir|grenache/.test(lower))f.elements.couleur.value="Rouge";
+
+ const appellations=[
+  "Bordeaux","Saint-Émilion","Saint Emilion","Pomerol","Médoc","Margaux","Pauillac","Saint-Julien",
+  "Bourgogne","Chablis","Meursault","Pommard","Gevrey-Chambertin","Châteauneuf-du-Pape",
+  "Côtes-du-Rhône","Crozes-Hermitage","Hermitage","Gigondas","Vacqueyras","Sancerre","Pouilly-Fumé",
+  "Alsace","Champagne","Prosecco","Rioja","Ribera del Duero","Priorat","Rueda","Chianti","Barolo",
+  "Brunello di Montalcino","Napa Valley","Porto"
+ ];
+ const app=appellations.find(x=>lower.includes(x.toLowerCase()));
+ setIfEmpty("appellation",app);
+
+ const domaineKeywords=/château|domaine|clos|maison|bodega|cantina|tenuta|estate|vineyard|vignoble/i;
+ const domaine=lignes.find(x=>domaineKeywords.test(x) && !/appellation|produit|origine|mis en bouteille/i.test(x));
+ if(domaine)setIfEmpty("domaine",domaine.replace(/^(domaine|château|clos|maison|bodega|cantina|tenuta)\s*/i,m=>m));
+
+ const bad=/^(vin|wine|vignoble|vins?|wine of|product of|mis en bouteille|appellation|origine|france|français|francaise|imported|alcool|alc\.|75cl|750ml|bio|organic|rouge|red|blanc|white|rosé|rose)$/i;
+ const candidates=lignes
+  .map(x=>x.replace(/\b(19\d{2}|20\d{2}|21\d{2})\b/g,"").replace(/[©®™]/g,"").trim())
+  .filter(x=>x.length>=3&&x.length<=80&&!bad.test(x)&&!/^[\d\W_]+$/.test(x))
+  .filter(x=>!/^\d+[,.]?\d*\s*(cl|l|%)/i.test(x));
+ const name=candidates.sort((a,b)=>{
+   const score=x=>(/[A-ZÀ-Ý]{2,}/.test(x)?3:0)+(domaine&&x===domaine?-5:0)+(x.length>=6?1:0);
+   return score(b)-score(a)||b.length-a.length;
+ })[0];
+ setIfEmpty("nom",name);
+ if(!f.elements.notes.value)f.elements.notes.value="Lecture automatique : "+lignes.slice(0,12).join(" • ");
+}function exporter(){const blob=new Blob([JSON.stringify({app:"Cave Victorio",version:2,exportedAt:new Date().toISOString(),bouteilles},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cave-victorio-"+new Date().toISOString().slice(0,10)+".json";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 document.getElementById("importFile").addEventListener("change",async function(){const file=this.files[0];if(!file)return;try{const data=JSON.parse(await file.text()),arr=Array.isArray(data)?data:data.bouteilles;if(!Array.isArray(arr))throw new Error("Format invalide");if(confirm("Remplacer la cave actuelle par cette sauvegarde ?")){bouteilles=arr;sauvegarder();alert("✅ Cave restaurée.");}}catch(e){alert("❌ Fichier de sauvegarde invalide.")}this.value=""});
 if(!bouteilles.length){bouteilles=[{id:"demo",nom:"Rioja Reserva",domaine:"Bodega Exemple",appellation:"Rioja",millesime:"2020",couleur:"Rouge",quantite:1,emplacement:"Étagère 1",prix:"15",note:"4",debut:"2025",apogeeDebut:"2027",apogeeFin:"2030",fin:"2033",accords:"Côte de bœuf, fromages affinés",notes:"Bouteille de démonstration."}];sauvegarder()}afficher();
 if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
