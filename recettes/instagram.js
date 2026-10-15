@@ -54,5 +54,16 @@
     $('openInstagramPost').onclick=()=>window.open(r.source,'_blank','noopener');$('editInstagramPost').onclick=()=>open(r);$('deleteInstagramPost').onclick=()=>deleteRecipe(r.id);
   };
   $('randomRecipe').onclick=()=>{const choices=state.recipes.filter(r=>r.kind!=='instagram');if(!choices.length)return notify('Ajoute d’abord quelques recettes classiques.');showRecipe(choices[Math.floor(Math.random()*choices.length)].id)};
+  window.planMeal=function(k,meal){
+    const choices=state.recipes.filter(r=>r.kind!=='instagram');
+    if(!choices.length)return notify('Ajoute d’abord une recette classique.');
+    const labels=choices.map((r,i)=>(i+1)+'. '+r.name).join('\\n');
+    const n=prompt('Choisis une recette en entrant son numéro :\\n'+labels);
+    if(n===null)return;
+    const r=choices[+n-1];if(!r)return notify('Numéro invalide.');
+    state.planner[k]=state.planner[k]||[];
+    state.planner[k]=state.planner[k].filter(x=>x.meal!==meal);
+    state.planner[k].push({meal,id:r.id,name:r.name});save();renderPlanner();
+  };
   renderRecipes();
 })();
