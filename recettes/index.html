@@ -99,4 +99,4 @@ $('restoreData').onclick=()=>{const f=$('restoreFile').files[0];if(!f)return not
 $('eraseAll').onclick=()=>{if(confirm('Effacer définitivement toutes les recettes, menus et courses de cet appareil ?')){state={recipes:[],planner:{},shopping:[],weekOffset:0};save();renderRecipes();renderPlanner();renderShopping();notify('Données effacées.')}};
 load();renderRecipes();renderPlanner();renderShopping();
 if('serviceWorker' in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
-</script></body></html>
+</script><script src="instagram.js"></script></body></html>
