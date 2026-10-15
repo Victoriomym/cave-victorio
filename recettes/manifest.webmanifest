@@ -1,0 +1,12 @@
+{
+  "name": "Mon carnet gourmand",
+  "short_name": "Recettes",
+  "description": "Carnet personnel de recettes, menus et courses",
+  "lang": "fr-FR",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#faf8f2",
+  "theme_color": "#254f3d",
+  "icons": []
+}
