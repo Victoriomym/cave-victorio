@@ -37,7 +37,7 @@
     e.preventDefault();const url=$('instagramUrl').value.trim();let u;
     try{u=new URL(url)}catch(_){return notify('Vérifie le lien Instagram.')}
     if(!['http:','https:'].includes(u.protocol)||!/(^|\.)instagram\.com$/i.test(u.hostname))return notify('Colle un lien provenant de instagram.com.');
-    const id=$('instagramId').value||uid(),old=state.recipes.find(r=>r.id===id);
+    const id=$('instagramId').value||((crypto&&crypto.randomUUID)?crypto.randomUUID():'ig-'+Date.now()+'-'+Math.random().toString(36).slice(2)),old=state.recipes.find(r=>r.id===id);
     const r={id,kind:'instagram',name:$('instagramName').value.trim(),category:'Autre',prep:0,cook:0,servings:1,rating:0,ingredients:[],steps:[],tags:['Instagram'],source:url,notes:$('instagramNotes').value.trim(),photo:savedPhoto,favorite:old&&old.favorite||false,created:old&&old.created||new Date().toISOString()};
     const i=state.recipes.findIndex(x=>x.id===id);if(i>=0)state.recipes[i]=r;else state.recipes.unshift(r);
     save();close();renderRecipes();notify('Lien Instagram enregistré dans ton carnet.');
