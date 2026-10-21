@@ -24,7 +24,7 @@ const $=id=>document.getElementById(id), uid=()=>Date.now().toString(36)+Math.ra
 const KEY='monCarnetGourmand.v1';
 let state={recipes:[],planner:{},shopping:[],weekOffset:0}, currentPhoto='',detailRecipe=null,cookStep=0;
 function load(){try{const s=JSON.parse(localStorage.getItem(KEY)||'{}');state={...state,...s};state.recipes=state.recipes||[];state.planner=state.planner||{};state.shopping=state.shopping||[]}catch(e){console.warn(e)}}
-function save(){localStorage.setItem(KEY,JSON.stringify(state));if(typeof renderBackupStatus==='function'&&$('backupStatus'))renderBackupStatus()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));if(typeof renderBackupStatus==='function'&&$('backupStatus'))renderBackupStatus();return true}catch(e){console.error('Échec de sauvegarde locale',e);const message='Attention : le navigateur n’a pas réussi à enregistrer cette modification. Elle peut être perdue si tu fermes ou actualises l’application. Exporte immédiatement une sauvegarde JSON si tes données sont encore visibles, puis libère de l’espace ou restaure depuis une sauvegarde.';if($('backupStatus'))$('backupStatus').innerHTML='<b>⚠️ Enregistrement impossible</b><br>'+message;alert(message);return false}}
 function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function norm(s){return String(s||'').toLocaleLowerCase('fr').normalize('NFD').replace(/[\u0300-\u036f]/g,'')}
 function notify(s){alert(s)}
