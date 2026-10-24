@@ -6,11 +6,11 @@
   window.renderRecipes = function(){
     const q = norm($('search').value), cat = $('categoryFilter').value, fav = $('favFilter').checked;
     const list = state.recipes.filter(r =>
-      (!q || norm([r.name,r.category,r.tags,r.notes,r.source,...(r.ingredients||[]).map(i=>i.name)].join(' ')).includes(q)) &&
-      (!cat || r.category===cat) && (!fav || r.favorite));
+      (!q || norm([r.name,r.category,...recipeCategories(r),r.tags,r.notes,r.source,...(r.ingredients||[]).map(i=>i.name)].join(' ')).includes(q)) &&
+      (!cat || recipeCategories(r).includes(cat)) && (!fav || r.favorite));
     $('recipeGrid').innerHTML = list.length ? list.map(r =>
       '<article class="card">'+(r.photo?'<img class="recipe-photo" src="'+r.photo+'" alt="">':'<div class="placeholder">'+(r.kind==='instagram'?'📱':'🍲')+'</div>')+
-      '<div class="card-body"><h3>'+esc(r.name)+'</h3><div class="meta">'+(r.kind==='instagram'?'📱 Instagram · Lien enregistré':esc(r.category||'Autre')+' · '+((+r.prep||0)+(+r.cook||0))+' min · '+(+r.servings||4)+' portions')+'</div>'+
+      '<div class="card-body"><h3>'+esc(r.name)+'</h3><div class="meta">'+(r.kind==='instagram'?'📱 Instagram · '+recipeCategories(r).map(esc).join(' · ')+'':recipeCategories(r).map(esc).join(' · ')+' · '+((+r.prep||0)+(+r.cook||0))+' min · '+(+r.servings||4)+' portions')+'</div>'+
       '<div class="chips">'+(r.kind==='instagram'?'<span class="chip">Instagram</span>':(r.tags||[]).map(t=>'<span class="chip">'+esc(t)+'</span>').join(''))+'</div><div>'+('⭐'.repeat(+r.rating||0))+(r.favorite?' ♥':'')+'</div>'+
       '<div class="toolbar"><button class="small" data-see="'+esc(r.id)+'">Voir</button><button class="small secondary" data-edit="'+esc(r.id)+'">Modifier</button><button class="small secondary" data-fav="'+esc(r.id)+'">'+(r.favorite?'♥':'♡')+'</button></div></div></article>'
     ).join('') : '<div class="empty">Aucune recette pour le moment.<br>Ajoute ton premier plat avec « Nouvelle recette ».</div>';
@@ -21,13 +21,14 @@
   const btn=document.createElement('button');btn.className='secondary';btn.textContent='＋ Lien Instagram';btn.id='addInstagram';
   $('addRecipe').insertAdjacentElement('afterend',btn);
   const modal=document.createElement('div');modal.id='instagramModal';modal.className='modal';
-  modal.innerHTML='<div class="modalbox"><div class="modalhead"><h2 id="instagramModalTitle">Ajouter un lien Instagram</h2><button type="button" class="secondary" id="closeInstagram">✕</button></div><form id="instagramForm"><input type="hidden" id="instagramId"><div class="field"><label>Titre de la recette *</label><input id="instagramName" required placeholder="Ex. : Pommes de terre croustillantes"></div><div class="field"><label>Lien Instagram *</label><input id="instagramUrl" type="url" required placeholder="https://www.instagram.com/reel/…"></div><div class="field"><label>Photo de la recette (facultatif)</label><input id="instagramPhoto" type="file" accept="image/*"><img id="instagramPreview" class="recipe-photo hidden" alt="Aperçu de la photo"></div><div class="field"><label>Note personnelle (facultatif)</label><textarea id="instagramNotes" placeholder="À essayer, variantes, ingrédients à ajouter…"></textarea></div><p class="meta">Le lien ouvre la publication d’origine. La photo et les notes sont enregistrées sur cet appareil.</p><div class="toolbar"><button type="submit">Enregistrer dans le carnet</button><button type="button" class="secondary" id="cancelInstagram">Annuler</button></div></form></div>';
+  modal.innerHTML='<div class="modalbox"><div class="modalhead"><h2 id="instagramModalTitle">Ajouter un lien Instagram</h2><button type="button" class="secondary" id="closeInstagram">✕</button></div><form id="instagramForm"><input type="hidden" id="instagramId"><div class="field"><label>Titre de la recette *</label><input id="instagramName" required placeholder="Ex. : Pommes de terre croustillantes"></div><div class="field"><label>Lien Instagram *</label><input id="instagramUrl" type="url" required placeholder="https://www.instagram.com/reel/…"></div><div class="field"><label>Photo de la recette (facultatif)</label><input id="instagramPhoto" type="file" accept="image/*"><img id="instagramPreview" class="recipe-photo hidden" alt="Aperçu de la photo"></div><div class="field"><label>Catégories (tu peux en choisir plusieurs)</label><div id="instagramCategories" class="split"><label><input type="checkbox" value="Entrées &amp; salades"> Entrées &amp; salades</label><label><input type="checkbox" value="Viandes &amp; volailles"> Viandes &amp; volailles</label><label><input type="checkbox" value="Poissons &amp; fruits de mer"> Poissons &amp; fruits de mer</label><label><input type="checkbox" value="Plats complets"> Plats complets</label><label><input type="checkbox" value="Accompagnements"> Accompagnements</label><label><input type="checkbox" value="Sauces"> Sauces</label><label><input type="checkbox" value="Apéritifs"> Apéritifs</label><label><input type="checkbox" value="Soupes"> Soupes</label><label><input type="checkbox" value="Desserts &amp; pâtisseries"> Desserts &amp; pâtisseries</label><label><input type="checkbox" value="Pains &amp; pâtes"> Pains &amp; pâtes</label><label><input type="checkbox" value="Boissons &amp; cocktails"> Boissons &amp; cocktails</label><label><input type="checkbox" value="Autres"> Autres</label></div></div><div class="field"><label>Note personnelle (facultatif)</label><textarea id="instagramNotes" placeholder="À essayer, variantes, ingrédients à ajouter…"></textarea></div><p class="meta">Le lien ouvre la publication d’origine. La photo et les notes sont enregistrées sur cet appareil.</p><div class="toolbar"><button type="submit">Enregistrer dans le carnet</button><button type="button" class="secondary" id="cancelInstagram">Annuler</button></div></form></div>';
   document.body.append(modal);
   function close(){modal.classList.remove('open')}
   function open(r){
     $('instagramForm').reset();savedPhoto=r&&r.photo||'';$('instagramId').value=r&&r.id||'';
     $('instagramModalTitle').textContent=r?'Modifier le lien Instagram':'Ajouter un lien Instagram';
     $('instagramName').value=r&&r.name||'';$('instagramUrl').value=r&&r.source||'';$('instagramNotes').value=r&&r.notes||'';
+    document.querySelectorAll('#instagramCategories input[type="checkbox"]').forEach(cb=>cb.checked=recipeCategories(r||{}).includes(cb.value));
     $('instagramPreview').classList.toggle('hidden',!savedPhoto);if(savedPhoto)$('instagramPreview').src=savedPhoto;
     modal.classList.add('open');
   }
@@ -38,7 +39,8 @@
     try{u=new URL(url)}catch(_){return notify('Vérifie le lien Instagram.')}
     if(!['http:','https:'].includes(u.protocol)||!/(^|\.)instagram\.com$/i.test(u.hostname))return notify('Colle un lien provenant de instagram.com.');
     const id=$('instagramId').value||((crypto&&crypto.randomUUID)?crypto.randomUUID():'ig-'+Date.now()+'-'+Math.random().toString(36).slice(2)),old=state.recipes.find(r=>r.id===id);
-    const r={id,kind:'instagram',name:$('instagramName').value.trim(),category:'Autre',prep:0,cook:0,servings:1,rating:0,ingredients:[],steps:[],tags:['Instagram'],source:url,notes:$('instagramNotes').value.trim(),photo:savedPhoto,favorite:old&&old.favorite||false,created:old&&old.created||new Date().toISOString()};
+    const categories=[...document.querySelectorAll('#instagramCategories input[type="checkbox"]:checked')].map(cb=>cb.value);
+    const r={id,kind:'instagram',name:$('instagramName').value.trim(),category:categories[0]||old&&old.category||'Autres',categories:categories.length?categories:(old&&old.categories||[old&&old.category||'Autres']),prep:0,cook:0,servings:1,rating:0,ingredients:[],steps:[],tags:['Instagram'],source:url,notes:$('instagramNotes').value.trim(),photo:savedPhoto,favorite:old&&old.favorite||false,created:old&&old.created||new Date().toISOString()};
     const i=state.recipes.findIndex(x=>x.id===id);if(i>=0)state.recipes[i]=r;else state.recipes.unshift(r);
     save();close();renderRecipes();notify('Lien Instagram enregistré dans ton carnet.');
   };
