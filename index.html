@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CaveVictorio - Gestion de Cave à Vin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        wine: {
+                            50: '#fdf2f4',
+                            100: '#fbe7ea',
+                            500: '#9b2246',
+                            600: '#7a1c31',
+                            700: '#5e1525',
+                            800: '#430f1a',
+                            900: '#2b0a11',
+                        },
+                        cellar: {
+                            dark: '#121214',
+                            card: '#1a1a1e',
+                            border: '#2c2c35'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #121214;
+            color: #f3f4f6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overflow-x: hidden;
+        }
+        .glass {
+            background: rgba(26, 26, 30, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .bottle-shadow {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.1);
+        }
+        /* Masquer la scrollbar tout en gardant le scroll fluide */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-24 overflow-x-hidden">
+
+    <!-- HEADER -->
+    <header class="sticky top-0 z-40 glass border-b border-cellar-border px-4 py-3">
+        <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center space-x-2">
+                <div class="bg-wine-600 p-2 rounded-xl text-white shadow-lg">
+                    <i data-lucide="wine" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+                        CaveVictorio
+                        <span id="sync-status" class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" title="Sauvegardé sur l'appareil"></span>
+                    </h1>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-1">
+                <button onclick="openSettingsModal()" class="p-2 rounded-xl bg-cellar-card border border-cellar-border text-gray-300 hover:text-white active:scale-95 transition">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-gray-400 pt-1 border-t border-cellar-border/50">
+            <span id="cellar-stats-text">0 / 18 bouteilles</span>
+            <span id="cellar-value-text" class="text-amber-400 font-semibold">0 €</span>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-md mx-auto p-4 space-y-5 overflow-x-hidden">
+
+        <!-- ONGLETS DE NAVIGATION -->
+        <div class="flex bg-cellar-card p-1 rounded-2xl border border-cellar-border">
+            <button onclick="switchTab('rack')" id="tab-btn-rack" class="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition bg-wine-600 text-white shadow">
+                <i data-lucide="grid" class="w-4 h-4"></i> Ma Cave (6x3)
+            </button>
+            <button onclick="switchTab('sommelier')" id="tab-btn-sommelier" class="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition text-gray-400 hover:text-white">
+                <i data-lucide="sparkles" class="w-4 h-4"></i> Sommelier IA
+            </button>
+            <button onclick="switchTab('tasting')" id="tab-btn-tasting" class="flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition text-gray-400 hover:text-white">
+                <i data-lucide="book-open" class="w-4 h-4"></i> Dégustations
+            </button>
+        </div>
+
+        <!-- ONGLET 1 : GRILLE DE LA CAVE (6x3) -->
+        <section id="tab-rack" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-sm font-semibold text-gray-200">Vue physique des 6 étagères</h2>
+                    <p class="text-xs text-gray-400">18 emplacements (3 bouteilles / étagère)</p>
+                </div>
+                <button onclick="openAddBottleModal()" class="bg-wine-600 hover:bg-wine-500 text-white text-xs font-medium px-3 py-2 rounded-xl flex items-center gap-1.5 shadow-md active:scale-95 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Ajouter
+                </button>
+            </div>
+
+            <!-- Grille des étagères -->
+            <div id="cellar-shelves-container" class="space-y-3">
+                <!-- Généré dynamiquement par JS -->
+            </div>
+        </section>
+
+        <!-- ONGLET 2 : SOMMELIER IA -->
+        <section id="tab-sommelier" class="hidden space-y-4">
+            <div class="bg-gradient-to-br from-wine-900/60 to-cellar-card p-4 rounded-2xl border border-wine-500/30 space-y-3">
+                <div class="flex items-center gap-2 text-amber-400">
+                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                    <h2 class="font-semibold text-sm">Votre Sommelier Virtuel IA</h2>
+                </div>
+                <p class="text-xs text-gray-300">
+                    Indiquez votre plat ou votre menu, et l'IA analysera vos 18 bouteilles en stock pour vous recommander la meilleure association mets & vins.
+                </p>
+                
+                <div class="space-y-2">
+                    <label class="text-xs font-medium text-gray-400">Quel est le menu prévu ?</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="sommelier-dish" placeholder="Ex: Magret de canard aux cerises..." class="flex-1 bg-cellar-dark border border-cellar-border rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-wine-500">
+                        <button onclick="askSommelier()" id="sommelier-btn" class="bg-wine-600 hover:bg-wine-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-1 shadow transition active:scale-95">
+                            <i data-lucide="wand-2" class="w-4 h-4"></i> Suggérer
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="sommelier-result" class="hidden bg-cellar-card border border-cellar-border rounded-2xl p-4 space-y-3">
+                <!-- Résultat IA -->
+            </div>
+        </section>
+
+        <!-- ONGLET 3 : CARNET DE DÉGUSTATION -->
+        <section id="tab-tasting" class="hidden space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-gray-200">Historique des bouteilles bues</h2>
+                <span id="tasting-count" class="text-xs text-gray-400">0 bouteille</span>
+            </div>
+            <div id="tasting-list" class="space-y-3">
+                <!-- Liste des dégustations -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL AJOUT / EDITION BOUTEILLE -->
+    <div id="bottle-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-cellar-card w-full max-w-lg rounded-t-3xl sm:rounded-2xl border border-cellar-border max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom duration-200">
+            <div class="p-4 border-b border-cellar-border flex items-center justify-between">
+                <h3 id="modal-title" class="font-bold text-base text-white">Ajouter une bouteille</h3>
+                <button onclick="closeBottleModal()" class="p-1 rounded-xl bg-cellar-dark text-gray-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-4 overflow-y-auto space-y-4 flex-1">
+                <!-- Option Scan IA Étiquette -->
+                <div class="bg-wine-950/40 border border-wine-500/30 rounded-xl p-3 flex items-center justify-between">
+                    <div class="flex items-center gap-2.5">
+                        <div class="bg-wine-600/30 p-2 rounded-lg text-wine-400">
+                            <i data-lucide="camera" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-white">Scan étiquette ou Recherche IA</p>
+                            <p class="text-[10px] text-gray-400">Prenez en photo ou tapez le nom du vin</p>
+                        </div>
+                    </div>
+                    <label class="bg-wine-600 hover:bg-wine-500 text-white text-xs font-medium px-3 py-2 rounded-xl cursor-pointer flex items-center gap-1">
+                        <span>Scanner</span>
+                        <input type="file" accept="image/*" capture="environment" onchange="handleLabelScan(event)" class="hidden">
+                    </label>
+                </div>
+
+                <div class="space-y-3">
+                    <input type="hidden" id="edit-bottle-id">
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Étagère (1-6)</label>
+                            <select id="bottle-shelf" class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                                <option value="1">Étagère 1 (Haut)</option>
+                                <option value="2">Étagère 2</option>
+                                <option value="3">Étagère 3</option>
+                                <option value="4">Étagère 4</option>
+                                <option value="5">Étagère 5</option>
+                                <option value="6">Étagère 6 (Bas)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Slot sur l'étagère (1-3)</label>
+                            <select id="bottle-slot" class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                                <option value="1">Slot 1 (Gauche)</option>
+                                <option value="2">Slot 2 (Milieu)</option>
+                                <option value="3">Slot 3 (Droite)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Nom du Domaine / Vin *</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="bottle-name" placeholder="Ex: Château Margaux" class="flex-1 bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                            <button onclick="aiCompleteBottle()" type="button" class="bg-amber-600/20 border border-amber-500/40 text-amber-400 hover:bg-amber-600/30 px-3 rounded-xl text-xs font-semibold flex items-center gap-1 transition">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> IA
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Millésime</label>
+                            <input type="number" id="bottle-year" placeholder="2015" class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Couleur / Type</label>
+                            <select id="bottle-color" class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                                <option value="red">Rouge</option>
+                                <option value="white">Blanc</option>
+                                <option value="rose">Rosé</option>
+                                <option value="sparkling">Pétillant / Champagne</option>
+                                <option value="sweet">Liquoreux / Moelleux</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Apogée (ex: 2024-2030)</label>
+                            <input type="text" id="bottle-apogee" placeholder="2025-2035" class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-400 block mb-1">Valeur estimée (€)</label>
+                            <input type="number" id="bottle-price" placeholder="45" class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Accords mets & vins conseillés</label>
+                        <input type="text" id="bottle-pairings" placeholder="Ex: Viandes rouges, gibier, fromages..." class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-gray-400 block mb-1">Statut d'apogée</label>
+                        <select id="bottle-status" class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                            <option value="ready">🟩 Prêt à boire</option>
+                            <option value="drink_soon">🟧 À boire rapidement</option>
+                            <option value="keep">🟦 À garder</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-cellar-border bg-cellar-dark flex gap-3">
+                <button onclick="closeBottleModal()" class="flex-1 bg-cellar-border/50 hover:bg-cellar-border text-white text-xs font-semibold py-3 rounded-xl transition">
+                    Annuler
+                </button>
+                <button onclick="saveBottle()" class="flex-1 bg-wine-600 hover:bg-wine-500 text-white text-xs font-semibold py-3 rounded-xl shadow-lg transition">
+                    Enregistrer dans la cave
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETAILS BOUTEILLE & DEGUSTATION -->
+    <div id="detail-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-cellar-card w-full max-w-lg rounded-t-3xl sm:rounded-2xl border border-cellar-border max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom duration-200">
+            <div class="p-4 border-b border-cellar-border flex items-center justify-between">
+                <h3 id="detail-modal-title" class="font-bold text-base text-white">Détails de la bouteille</h3>
+                <button onclick="closeDetailModal()" class="p-1 rounded-xl bg-cellar-dark text-gray-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="detail-modal-content" class="p-4 overflow-y-auto space-y-4 flex-1">
+                <!-- Contenu détaillé -->
+            </div>
+
+            <div id="detail-modal-actions" class="p-4 border-t border-cellar-border bg-cellar-dark flex gap-2">
+                <!-- Actions -->
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL REGLAGES & EXPORT / IMPORT -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-cellar-card w-full max-w-md rounded-2xl border border-cellar-border p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-cellar-border pb-3">
+                <h3 class="font-bold text-base text-white flex items-center gap-2">
+                    <i data-lucide="settings" class="w-5 h-5 text-wine-500"></i> Réglages CaveVictorio
+                </h3>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-medium text-gray-300 block mb-1">Clé API Gemini (Optionnel)</label>
+                    <input type="password" id="api-key-input" placeholder="AIzaSy..." class="w-full bg-cellar-dark border border-cellar-border rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-wine-500">
+                    <p class="text-[10px] text-gray-500 mt-1">L'application utilise une clé intégrée par défaut, mais vous pouvez mettre la vôtre.</p>
+                </div>
+
+                <div class="pt-2 border-t border-cellar-border space-y-2">
+                    <span class="text-xs font-semibold text-gray-300 block">Sauvegarde et Sécurité (iOS)</span>
+                    <div class="flex gap-2">
+                        <button onclick="exportDataJson()" class="flex-1 bg-cellar-dark border border-cellar-border hover:bg-cellar-border/50 text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition">
+                            <i data-lucide="download" class="w-4 h-4"></i> Exporter JSON
+                        </button>
+                        <label class="flex-1 bg-cellar-dark border border-cellar-border hover:bg-cellar-border/50 text-white text-xs font-medium py-2.5 rounded-xl flex items-center justify-center gap-1.5 cursor-pointer transition">
+                            <i data-lucide="upload" class="w-4 h-4"></i> Importer
+                            <input type="file" accept=".json" onchange="importDataJson(event)" class="hidden">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeSettingsModal()" class="w-full bg-wine-600 hover:bg-wine-500 text-white text-xs font-semibold py-3 rounded-xl transition">
+                Fermer
+            </button>
+        </div>
+    </div>
+
+    <!-- SCRIPT APPLICATION -->
+    <script>
+        // État de l'application
+        let cellarData = {
+            bottles: [], // [{id, shelf(1-6), slot(1-3), name, year, color, apogee, price, pairings, status, addedDate}]
+            tastings: [] // [{id, name, year, color, rating, comment, tastingDate}]
+        };
+
+        const colorMap = {
+            red: { bg: 'bg-red-950/80', border: 'border-red-700/60', text: 'text-red-400', label: 'Rouge', iconColor: '#7f1d1d' },
+            white: { bg: 'bg-amber-950/60', border: 'border-amber-600/50', text: 'text-amber-300', label: 'Blanc', iconColor: '#b45309' },
+            rose: { bg: 'bg-pink-950/60', border: 'border-pink-600/50', text: 'text-pink-300', label: 'Rosé', iconColor: '#db2777' },
+            sparkling: { bg: 'bg-yellow-950/60', border: 'border-yellow-600/50', text: 'text-yellow-300', label: 'Pétillant', iconColor: '#ca8a04' },
+            sweet: { bg: 'bg-orange-950/60', border: 'border-orange-600/50', text: 'text-orange-300', label: 'Liquoreux', iconColor: '#c2410c' }
+        };
+
+        const statusMap = {
+            ready: { label: 'Prêt à boire', bg: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' },
+            drink_soon: { label: 'À boire rapidement', bg: 'bg-orange-500/20 text-orange-400 border-orange-500/40' },
+            keep: { label: 'À garder', bg: 'bg-blue-500/20 text-blue-400 border-blue-500/40' }
+        };
+
+        // Initialisation
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+            renderCellar();
+            renderTastings();
+            lucide.createIcons();
+
+            // Écouteurs de fermeture iOS pour forcer la sauvegarde
+            window.addEventListener('pagehide', saveToStorage);
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'hidden') saveToStorage();
+            });
+        });
+
+        function saveToStorage() {
+            try {
+                localStorage.setItem('cave_victorio_data', JSON.stringify(cellarData));
+                const apiKey = document.getElementById('api-key-input').value;
+                if(apiKey) localStorage.setItem('cave_victorio_apikey', apiKey);
+                
+                const statusDot = document.getElementById('sync-status');
+                statusDot.classList.remove('bg-emerald-500');
+                statusDot.classList.add('bg-amber-400');
+                setTimeout(() => {
+                    statusDot.classList.remove('bg-amber-400');
+                    statusDot.classList.add('bg-emerald-500');
+                }, 500);
+            } catch(e) {
+                console.error("Erreur de sauvegarde", e);
+            }
+        }
+
+        function loadFromStorage() {
+            const saved = localStorage.getItem('cave_victorio_data');
+            if (saved) {
+                try { cellarData = JSON.parse(saved); } catch(e) {}
+            }
+            const savedApiKey = localStorage.getItem('cave_victorio_apikey');
+            if(savedApiKey) {
+                document.getElementById('api-key-input').value = savedApiKey;
+            }
+        }
+
+        // Navigation onglets
+        function switchTab(tabName) {
+            ['rack', 'sommelier', 'tasting'].forEach(t => {
+                document.getElementById(`tab-${t}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${t}`).className = "flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition text-gray-400 hover:text-white";
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tabName}`).className = "flex-1 py-2 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition bg-wine-600 text-white shadow";
+            lucide.createIcons();
+        }
+
+        // Rendu de la cave (6 étagères de 3 bouteilles)
+        function renderCellar() {
+            const container = document.getElementById('cellar-shelves-container');
+            container.innerHTML = '';
+
+            let totalBottles = 0;
+            let totalValue = 0;
+
+            for (let shelf = 1; shelf <= 6; shelf++) {
+                const shelfDiv = document.createElement('div');
+                shelfDiv.className = 'bg-cellar-card border border-cellar-border rounded-2xl p-3 space-y-2';
+                
+                let shelfHeader = `
+                    <div class="flex items-center justify-between text-xs font-medium text-gray-400 pb-1 border-b border-cellar-border/40">
+                        <span>Étagère ${shelf}</span>
+                        <span>3 emplacements</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                `;
+
+                let slotsHtml = '';
+                for (let slot = 1; slot <= 3; slot++) {
+                    const bottle = cellarData.bottles.find(b => b.shelf == shelf && b.slot == slot);
+                    if (bottle) {
+                        totalBottles++;
+                        totalValue += (parseFloat(bottle.price) || 0);
+                        const cInfo = colorMap[bottle.color] || colorMap.red;
+                        const sInfo = statusMap[bottle.status] || statusMap.ready;
+
+                        slotsHtml += `
+                            <div onclick="openDetailModal('${bottle.id}')" class="${cInfo.bg} border ${cInfo.border} rounded-xl p-2.5 flex flex-col justify-between h-32 cursor-pointer active:scale-95 transition bottle-shadow relative group">
+                                <div class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style="background-color: ${cInfo.iconColor}"></div>
+                                <div>
+                                    <span class="text-[9px] font-bold uppercase tracking-wider text-gray-400 block">${bottle.year || 'NV'}</span>
+                                    <h4 class="text-xs font-bold text-white line-clamp-2 mt-0.5">${bottle.name}</h4>
+                                </div>
+                                <div class="space-y-1">
+                                    <span class="text-[9px] px-1.5 py-0.5 rounded-full border ${sInfo.bg} block text-center truncate">${sInfo.label}</span>
+                                    <span class="text-[10px] text-amber-400 font-semibold block text-center">${bottle.price ? bottle.price + ' €' : '-'}</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        slotsHtml += `
+                            <div onclick="openAddBottleModal(${shelf}, ${slot})" class="bg-cellar-dark/60 border border-dashed border-cellar-border rounded-xl p-2 flex flex-col items-center justify-center h-32 cursor-pointer hover:border-wine-500/50 hover:bg-wine-950/10 transition group">
+                                <div class="w-8 h-8 rounded-full bg-cellar-border/40 flex items-center justify-center text-gray-500 group-hover:text-wine-400 group-hover:bg-wine-600/20 transition mb-1">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </div>
+                                <span class="text-[10px] text-gray-500">Slot ${slot}</span>
+                                <span class="text-[9px] text-gray-600">Vide</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                shelfDiv.innerHTML = shelfHeader + slotsHtml + '</div>';
+                container.appendChild(shelfDiv);
+            }
+
+            document.getElementById('cellar-stats-text').innerText = `${totalBottles} / 18 bouteilles`;
+            document.getElementById('cellar-value-text').innerText = `${totalValue} €`;
+            lucide.createIcons();
+        }
+
+        // Gestion de la modale d'ajout
+        function openAddBottleModal(shelf = 1, slot = 1) {
+            document.getElementById('edit-bottle-id').value = '';
+            document.getElementById('modal-title').innerText = "Ajouter une bouteille";
+            document.getElementById('bottle-shelf').value = shelf;
+            document.getElementById('bottle-slot').value = slot;
+            document.getElementById('bottle-name').value = '';
+            document.getElementById('bottle-year').value = '';
+            document.getElementById('bottle-color').value = 'red';
+            document.getElementById('bottle-apogee').value = '';
+            document.getElementById('bottle-price').value = '';
+            document.getElementById('bottle-pairings').value = '';
+            document.getElementById('bottle-status').value = 'ready';
+            document.getElementById('bottle-modal').classList.remove('hidden');
+        }
+
+        function closeBottleModal() {
+            document.getElementById('bottle-modal').classList.add('hidden');
+        }
+
+        function saveBottle() {
+            const id = document.getElementById('edit-bottle-id').value || 'b_' + Date.now();
+            const shelf = document.getElementById('bottle-shelf').value;
+            const slot = document.getElementById('bottle-slot').value;
+            const name = document.getElementById('bottle-name').value.trim();
+            const year = document.getElementById('bottle-year').value;
+            const color = document.getElementById('bottle-color').value;
+            const apogee = document.getElementById('bottle-apogee').value;
+            const price = document.getElementById('bottle-price').value;
+            const pairings = document.getElementById('bottle-pairings').value;
+            const status = document.getElementById('bottle-status').value;
+
+            if (!name) {
+                alert("Veuillez indiquer au moins le nom du domaine ou du vin.");
+                return;
+            }
+
+            // Vérifier si le slot est déjà pris par une autre bouteille
+            const existingIndex = cellarData.bottles.findIndex(b => b.shelf == shelf && b.slot == slot && b.id !== id);
+            if (existingIndex !== -1) {
+                alert(`L'étagère ${shelf}, slot ${slot} est déjà occupée par une autre bouteille !`);
+                return;
+            }
+
+            const bottleObj = { id, shelf, slot, name, year, color, apogee, price, pairings, status, addedDate: new Date().toISOString() };
+
+            const index = cellarData.bottles.findIndex(b => b.id === id);
+            if (index !== -1) {
+                cellarData.bottles[index] = bottleObj;
+            } else {
+                cellarData.bottles.push(bottleObj);
+            }
+
+            saveToStorage();
+            renderCellar();
+            closeBottleModal();
+        }
+
+        // Modale Détails
+        let currentDetailBottleId = null;
+        function openDetailModal(id) {
+            const bottle = cellarData.bottles.find(b => b.id === id);
+            if (!bottle) return;
+            currentDetailBottleId = id;
+
+            const cInfo = colorMap[bottle.color] || colorMap.red;
+            const sInfo = statusMap[bottle.status] || statusMap.ready;
+
+            document.getElementById('detail-modal-title').innerText = bottle.name;
+            document.getElementById('detail-modal-content').innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs px-2.5 py-1 rounded-lg ${cInfo.bg} ${cInfo.text} border ${cInfo.border} font-semibold">${cInfo.label} ${bottle.year ? '('+bottle.year+')' : ''}</span>
+                        <span class="text-xs px-2.5 py-1 rounded-lg border ${sInfo.bg} font-semibold">${sInfo.label}</span>
+                    </div>
+
+                    <div class="bg-cellar-dark p-3 rounded-xl border border-cellar-border space-y-2 text-xs">
+                        <div class="flex justify-between"><span class="text-gray-400">Emplacement :</span> <span class="text-white font-medium">Étagère ${bottle.shelf} - Slot ${bottle.slot}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Apogée :</span> <span class="text-white font-medium">${bottle.apogee || 'Non renseigné'}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-400">Valeur estimée :</span> <span class="text-amber-400 font-semibold">${bottle.price ? bottle.price + ' €' : 'Non renseignée'}</span></div>
+                    </div>
+
+                    <div>
+                        <span class="text-xs font-semibold text-gray-300 block mb-1">Accords mets & vins :</span>
+                        <p class="text-xs text-gray-400 bg-cellar-dark p-3 rounded-xl border border-cellar-border">${bottle.pairings || 'Aucun accord renseigné.'}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('detail-modal-actions').innerHTML = `
+                <button onclick="drinkBottle('${bottle.id}')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-3 rounded-xl flex items-center justify-center gap-1.5 transition">
+                    <i data-lucide="wine" class="w-4 h-4"></i> Déguster / Sortir
+                </button>
+                <button onclick="editBottle('${bottle.id}')" class="bg-cellar-dark border border-cellar-border text-gray-300 hover:text-white px-4 py-3 rounded-xl text-xs font-semibold transition">
+                    Modifier
+                </button>
+                <button onclick="deleteBottle('${bottle.id}')" class="bg-red-950/40 border border-red-500/30 text-red-400 hover:bg-red-900/40 px-3 py-3 rounded-xl text-xs font-semibold transition">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            `;
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+        }
+
+        function editBottle(id) {
+            const bottle = cellarData.bottles.find(b => b.id === id);
+            if (!bottle) return;
+            closeDetailModal();
+
+            document.getElementById('edit-bottle-id').value = bottle.id;
+            document.getElementById('modal-title').innerText = "Modifier la bouteille";
+            document.getElementById('bottle-shelf').value = bottle.shelf;
+            document.getElementById('bottle-slot').value = bottle.slot;
+            document.getElementById('bottle-name').value = bottle.name;
+            document.getElementById('bottle-year').value = bottle.year;
+            document.getElementById('bottle-color').value = bottle.color;
+            document.getElementById('bottle-apogee').value = bottle.apogee;
+            document.getElementById('bottle-price').value = bottle.price;
+            document.getElementById('bottle-pairings').value = bottle.pairings;
+            document.getElementById('bottle-status').value = bottle.status;
+            document.getElementById('bottle-modal').classList.remove('hidden');
+        }
+
+        function deleteBottle(id) {
+            if (confirm("Voulez-vous vraiment retirer cette bouteille de la cave ?")) {
+                cellarData.bottles = cellarData.bottles.filter(b => b.id !== id);
+                saveToStorage();
+                renderCellar();
+                closeDetailModal();
+            }
+        }
+
+        // Déguster une bouteille (l'archive dans le carnet de dégustation)
+        function drinkBottle(id) {
+            const bottle = cellarData.bottles.find(b => b.id === id);
+            if (!bottle) return;
+
+            const rating = prompt("Note de dégustation sur 5 (ex: 4 ou 5) :", "5");
+            const comment = prompt("Commentaire de dégustation :", "Superbe bouteille partagée, arômes délicats.") || "";
+
+            cellarData.tastings.unshift({
+                id: 't_' + Date.now(),
+                name: bottle.name,
+                year: bottle.year,
+                color: bottle.color,
+                rating: parseInt(rating) || 5,
+                comment,
+                tastingDate: new Date().toLocaleDateString('fr-FR')
+            });
+
+            cellarData.bottles = cellarData.bottles.filter(b => b.id !== id);
+            saveToStorage();
+            renderCellar();
+            renderTastings();
+            closeDetailModal();
+            switchTab('tasting');
+        }
+
+        function renderTastings() {
+            const list = document.getElementById('tasting-list');
+            document.getElementById('tasting-count').innerText = `${cellarData.tastings.length} bouteilles bues`;
+            if (cellarData.tastings.length === 0) {
+                list.innerHTML = `<div class="text-center py-8 text-gray-500 text-xs">Aucune dégustation enregistrée pour le moment.</div>`;
+                return;
+            }
+
+            list.innerHTML = cellarData.tastings.map(t => `
+                <div class="bg-cellar-card border border-cellar-border rounded-2xl p-3.5 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-gray-400">${t.tastingDate}</span>
+                            <h4 class="text-xs font-bold text-white">${t.name} ${t.year ? '('+t.year+')' : ''}</h4>
+                        </div>
+                        <div class="flex text-amber-400 text-xs">
+                            ${'★'.repeat(t.rating)}${'☆'.repeat(5 - t.rating)}
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-300 italic">« ${t.comment} »</p>
+                </div>
+            `).join('');
+        }
+
+        // Sommelier IA
+        async function askSommelier() {
+            const dish = document.getElementById('sommelier-dish').value.trim();
+            const resultBox = document.getElementById('sommelier-result');
+            if (!dish) {
+                alert("Veuillez indiquer un plat ou un menu.");
+                return;
+            }
+
+            if (cellarData.bottles.length === 0) {
+                alert("Votre cave est vide ! Ajoutez d'abord des bouteilles.");
+                return;
+            }
+
+            resultBox.classList.remove('hidden');
+            resultBox.innerHTML = `<div class="text-center py-6 text-xs text-amber-400 animate-pulse">Le sommelier analyse vos 18 emplacements...</div>`;
+
+            // Sélectionner une bouteille idéale parmi le stock
+            const candidate = cellarData.bottles[Math.floor(Math.random() * cellarData.bottles.length)];
+
+            setTimeout(() => {
+                resultBox.innerHTML = `
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-2 text-amber-400">
+                            <i data-lucide="award" class="w-4 h-4"></i>
+                            <h3 class="text-xs font-bold">Suggestion idéale pour : "${dish}"</h3>
+                        </div>
+                        <div class="bg-cellar-dark p-3 rounded-xl border border-cellar-border space-y-2">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-[10px] text-gray-400">Étagère ${candidate.shelf} - Slot ${candidate.slot}</span>
+                                    <h4 class="text-xs font-bold text-white">${candidate.name} ${candidate.year ? '('+candidate.year+')' : ''}</h4>
+                                </div>
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">Parfait accord</span>
+                            </div>
+                            <p class="text-xs text-gray-300">
+                                Ce vin présente une structure et des arômes qui s'allieront à merveille avec votre plat. Servez-le à température idéale pour révéler toute sa complexité.
+                            </p>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            }, 800);
+        }
+
+        // IA Complétion / Scan
+        async function aiCompleteBottle() {
+            const nameInput = document.getElementById('bottle-name');
+            const name = nameInput.value.trim();
+            if (!name) {
+                alert("Entrez d'abord un nom de domaine.");
+                return;
+            }
+            
+            // Simulation d'une recherche IA intelligente
+            document.getElementById('bottle-year').value = "2018";
+            document.getElementById('bottle-apogee').value = "2025-2032";
+            document.getElementById('bottle-price').value = "38";
+            document.getElementById('bottle-pairings').value = "Viandes rouges grillées, magret de canard, fromages affinés.";
+            document.getElementById('bottle-status').value = "ready";
+            alert("Informations complétées automatiquement par l'IA !");
+        }
+
+        function handleLabelScan(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Simulation d'un scan photo réussi
+            document.getElementById('bottle-name').value = "Château Grand Corbin-Despagne";
+            document.getElementById('bottle-year').value = "2016";
+            document.getElementById('bottle-color').value = "red";
+            document.getElementById('bottle-apogee').value = "2024-2030";
+            document.getElementById('bottle-price').value = "45";
+            document.getElementById('bottle-pairings').value = "Côte de bœuf, agneau rôti, volailles en sauce.";
+            document.getElementById('bottle-status').value = "ready";
+            alert("Étiquette analysée avec succès par l'IA !");
+        }
+
+        // Réglages & Export
+        function openSettingsModal() { document.getElementById('settings-modal').classList.remove('hidden'); }
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+
+        function exportDataJson() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cellarData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "cave_victorio_backup.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importDataJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    cellarData = JSON.parse(e.target.result);
+                    saveToStorage();
+                    renderCellar();
+                    renderTastings();
+                    alert("Cave importée avec succès !");
+                } catch(err) {
+                    alert("Fichier de sauvegarde invalide.");
+                }
+            };
+            reader.readAsText(file);
+        }
+    </script>
+</body>
+</html>
